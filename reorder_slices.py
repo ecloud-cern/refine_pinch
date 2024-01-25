@@ -15,6 +15,7 @@ for ii in range(N):
     AA[f'slices/slice{N - ii - 1}'] = AA[f'slices/tslice{ii}']
     del AA[f'slices/tslice{ii}']
 
-# AA['grid/zg'][()] = AA['grid/zg'][()][::-1]
+AA['grid/zg'][()] = AA['grid/zg'][()][::-1]
+
 # print(AA['slices'].keys())
-# print(AA['grid/zg'][()])
+print(AA['grid/zg'][()])
