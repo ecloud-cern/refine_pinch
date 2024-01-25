@@ -4,7 +4,6 @@
 PINCH=$1
 parent=root://eosproject.cern.ch//eos/project/e/ecloud-simulations/kparasch/LHC_Triplets
 optics=run3_bet30cm_160urad_1.2e11ppb_2.0um/
-eos_folder=/eos/project/e/ecloud-simulations/...
 
 SEY=`echo $PINCH | grep -o -P '_sey.{4}_' | cut -c 5-8`
 
@@ -21,4 +20,4 @@ python reorder_slices.py $PINCH
 python refine_pinch.py $PINCH --MTI $2 --MLI $2
 
 destination_folder=${parent}/Refined_pinches/${optics}/SEY${SEY}
-xrdcp ${PINCH} ${destination_folder}
+xrdcp -f refined_*.h5 ${destination_folder}

@@ -1,8 +1,8 @@
 executable  = executable.sh
-arguments = LHC6.8TeV_v1_Q1R1_0_sey1.35_1.20e11ppb.h5 ${mli}
-output = log/LHC6.8TeV_v1_Q1R1_0_sey1.35_1.20e11ppb.h5_${mli}.out
-error = log/LHC6.8TeV_v1_Q1R1_0_sey1.35_1.20e11ppb.h5_${mli}.err
-log = log/LHC6.8TeV_v1_Q1R1_0_sey1.35_1.20e11ppb.h5_${mli}.log
+arguments = LHC6.8TeV_v1_Q1R1_0_sey1.35_1.20e11ppb.h5 $(mli)
+output = log/LHC6.8TeV_v1_Q1R1_0_sey1.35_1.20e11ppb.h5_$(mli).out
+error = log/LHC6.8TeV_v1_Q1R1_0_sey1.35_1.20e11ppb.h5_$(mli).err
+log = log/LHC6.8TeV_v1_Q1R1_0_sey1.35_1.20e11ppb.h5_$(mli).log
 transfer_output_files = ""
 +SingularityImage = "/cvmfs/unpacked.cern.ch/registry.cern.ch/ecloud-scrubbing/pyecloud:2024.1"
 RequestCpus = 24
