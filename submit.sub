@@ -1,0 +1,12 @@
+executable  = executable.sh
+arguments = $pinch_name $MTI $MLI $DTO $DLO $do_symm $pinch_folder $in_folder $out_folder
+output = log/$out_name/htcondor.out
+error = log/$out_name/htcondor.err
+log = log/$out_name/htcondor.log
+transfer_input_files = simulations/$out_name
+RequestCpus = 24
+stream_output = True
+stream_error = True
++BigMemJob = True
++MaxRunTime = 259200
+queue 1 input in 1, 2, 4, 6, 8
