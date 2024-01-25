@@ -11,6 +11,12 @@ SEY=`echo $PINCH | grep -o -P '_sey.{4}_' | cut -c 5-8`
 source_file=${parent}/Pinches/${optics}/SEY${SEY}/${PINCH}
 xrdcp ${source_file} .
 
+wget https://github.com/ecloud-cern/refine_pinch/raw/main/ecloud_xsuite_filemanager.py
+wget https://github.com/ecloud-cern/refine_pinch/raw/main/refine_pinch.py
+wget https://github.com/ecloud-cern/refine_pinch/raw/main/refinement_helpers.py
+wget https://github.com/ecloud-cern/refine_pinch/raw/main/reorder_slices.py
+wget https://github.com/ecloud-cern/refine_pinch/raw/main/volume_helpers.py
+
 python reorder_slices.py $PINCH
 python refine_pinch.py $PINCH --MTI $2 --MLI $2
 
