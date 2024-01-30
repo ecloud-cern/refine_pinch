@@ -8,4 +8,5 @@ transfer_output_files = ""
 RequestCpus = 24
 +BigMemJob = True
 +MaxRunTime = 259200
++AccountingGroup = "group_u_BE.u_bigmem"
 queue 1 mli in 1, 2, 4, 6, 8
