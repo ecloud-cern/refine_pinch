@@ -185,9 +185,12 @@ hist_counts, bins = np.histogram([], bins=2000, range=(-13,0))
 log10_vx_hist = np.zeros_like(hist_counts)
 log10_vy_hist = np.zeros_like(hist_counts)
 log10_vz_hist = np.zeros_like(hist_counts)
-max_log10_vx = -20
-max_log10_vy = -20
-max_log10_vz = -20
+max_log10_vx = -1000
+max_log10_vy = -1000
+max_log10_vz = -1000
+max_index_x = -1
+max_index_y = -1
+max_index_z = -1
 
 
 kk=0
