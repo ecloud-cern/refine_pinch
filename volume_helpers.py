@@ -30,7 +30,8 @@ def var_x(ix, iy, iz, TI, TIdx, dx):
     v1 = vol(a_coef,a_coef)
     v2 = vol(a_coef,coef2)
     v3 = vol(coef2,coef2)
-    return (v1 - 2*v2 + v3)/v3
+    vv = (v1 - 2*v2 + v3)
+    return vv/v3, vv
 
 def var_y(ix, iy, iz, TI, TIdy, dy):
 
@@ -46,7 +47,8 @@ def var_y(ix, iy, iz, TI, TIdy, dy):
     v1 = vol(a_coef,a_coef)
     v2 = vol(a_coef,coef2)
     v3 = vol(coef2,coef2)
-    return (v1 - 2*v2 + v3)/v3
+    vv = (v1 - 2*v2 + v3)
+    return vv/v3, vv
 
 def var_z(ix, iy, iz, TI, TIdz, dz):
 
@@ -62,7 +64,8 @@ def var_z(ix, iy, iz, TI, TIdz, dz):
     v1 = vol(a_coef,a_coef)
     v2 = vol(a_coef,coef2)
     v3 = vol(coef2,coef2)
-    return (v1 - 2*v2 + v3)/v3
+    vv = (v1 - 2*v2 + v3)
+    return vv/v3, vv
 
 
 
