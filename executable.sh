@@ -1,6 +1,8 @@
 #!/bin/bash
 
 
+export OMP_NUM_THREADS=24
+
 PINCH=$1
 parent=root://eosproject.cern.ch//eos/project/e/ecloud-simulations/kparasch/LHC_Triplets
 optics=run3_bet30cm_160urad_1.2e11ppb_2.0um/
