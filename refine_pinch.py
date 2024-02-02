@@ -181,10 +181,13 @@ print('Reading... ')
 ti_method = 'Exact-Mirror2' if do_symmetric2D else 'Exact'
 
 plot_hist_str = 'plt.hist(bins[:-1], bins, weights=counts, histtype=\'step\', log=True)'
-hist_counts, bins = np.histogram([], bins=2000, range=(-13,0))
+hist_counts, bins = np.histogram([], bins=4000, range=(-13,+13))
 log10_vx_hist = np.zeros_like(hist_counts)
 log10_vy_hist = np.zeros_like(hist_counts)
 log10_vz_hist = np.zeros_like(hist_counts)
+log10_vxn_hist = np.zeros_like(hist_counts)
+log10_vyn_hist = np.zeros_like(hist_counts)
+log10_vzn_hist = np.zeros_like(hist_counts)
 max_log10_vx = -1000
 max_log10_vy = -1000
 max_log10_vz = -1000
@@ -215,19 +218,28 @@ for kk in range(1,len(zg_new)):
     vx = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
     vy = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
     vz = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+    vxn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+    vyn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+    vzn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
     for ix in range(TIphi.ix_bound_low, TIphi.ix_bound_up+1):
         for iy in range(TIphi.iy_bound_low, TIphi.iy_bound_up+1):
-            vx[ix,iy] = vh.var_x(ix, iy, iz, TIphi, TIex, dx_new)    
-            vy[ix,iy] = vh.var_y(ix, iy, iz, TIphi, TIey, dy_new)    
-            vz[ix,iy] = vh.var_z(ix, iy, iz, TIphi, TIez, dz_new)    
+            vxn[ix,iy], vx[ix,iy] = vh.var_x(ix, iy, iz, TIphi, TIex, dx_new)    
+            vyn[ix,iy], vy[ix,iy] = vh.var_y(ix, iy, iz, TIphi, TIey, dy_new)    
+            vzn[ix,iy], vz[ix,iy] = vh.var_z(ix, iy, iz, TIphi, TIez, dz_new)    
 
     lvx = np.log10(vx)
     lvy = np.log10(vy)
     lvz = np.log10(vz)
+    lvxn = np.log10(vxn)
+    lvyn = np.log10(vyn)
+    lvzn = np.log10(vzn)
 
-    log10_vx_hist += np.histogram(lvx.flatten(), bins=2000, range=(-13,0))[0]
-    log10_vy_hist += np.histogram(lvy.flatten(), bins=2000, range=(-13,0))[0]
-    log10_vz_hist += np.histogram(lvz.flatten(), bins=2000, range=(-13,0))[0]
+    log10_vx_hist += np.histogram(lvx.flatten(), bins=4000, range=(-13,+13))[0]
+    log10_vy_hist += np.histogram(lvy.flatten(), bins=4000, range=(-13,+13))[0]
+    log10_vz_hist += np.histogram(lvz.flatten(), bins=4000, range=(-13,+13))[0]
+    log10_vxn_hist += np.histogram(lvxn.flatten(), bins=4000, range=(-13,+13))[0]
+    log10_vyn_hist += np.histogram(lvyn.flatten(), bins=4000, range=(-13,+13))[0]
+    log10_vzn_hist += np.histogram(lvzn.flatten(), bins=4000, range=(-13,+13))[0]
 
     if max_log10_vx < np.max(lvx):
         max_index_x = np.unravel_index(np.argmax(lvx, axis=None), lvx.shape) + (kk,)
@@ -262,6 +274,9 @@ stats_dict = {'max_log10_vx': max_log10_vx,
               'log10_vx_hist': log10_vx_hist,
               'log10_vy_hist': log10_vy_hist,
               'log10_vz_hist': log10_vz_hist,
+              'log10_vxn_hist': log10_vxn_hist,
+              'log10_vyn_hist': log10_vyn_hist,
+              'log10_vzn_hist': log10_vzn_hist,
               'plot_hist_str': plot_hist_str,
               'ti_method': ti_method
              }
