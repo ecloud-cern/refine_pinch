@@ -1,6 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import scipy.io as sio
+import h5py
+#import matplotlib.pyplot as plt
+#import scipy.io as sio
 import os
 import time
 import shutil
@@ -21,6 +22,7 @@ parser.add_argument("--MLI", nargs="?", type=float, default=1.)
 parser.add_argument("--DTO", nargs="?", type=float, default=1.)
 parser.add_argument("--DLO", nargs="?", type=float, default=1.)
 parser.add_argument("--symmetric2D", action="store_true")
+parser.add_argument("--volume", action="store_true")
 args = parser.parse_args()
 
 
@@ -32,6 +34,7 @@ demagnify_transverse_out = args.DTO
 demagnify_longitudinal_out = args.DLO
 compression_opts = 0
 do_symmetric2D = args.symmetric2D
+volume = args.volume
 debug = False
 
 symm_str = ''
@@ -83,19 +86,22 @@ yg_new = np.linspace( pic_out.yg[Nd], pic_out.yg[-Nd-1], ny_new)
 #    print('%d/%d'%(ii,len(zg_inside)))
 
 phi_slices = deque()
-ex_slices = deque()
-ey_slices = deque()
-ez_slices = deque()
+if volume:
+    ex_slices = deque()
+    ey_slices = deque()
+    ez_slices = deque()
 z_slices = deque()
 
 for i in range(7):
     z_slices.append(zg_inside[i])
     phi_slices.append(rh.get_slice(pic_out,pic_in,fname, zg_inside[i], symmetric_slice_2D=do_symmetric2D))
-    ex_slices.append(rh.ex_from_phi_slice(phi_slices[i], pic_in.Dh))
-    ey_slices.append(rh.ey_from_phi_slice(phi_slices[i], pic_in.Dh))
-ez_slices.append(np.zeros_like(phi_slices[0]))
-for i in range(1,6):
-    ez_slices.append(rh.ez_from_two_phi_slices(phi_slices[i-1], phi_slices[i+1], dz_inside))
+    if volume:
+        ex_slices.append(rh.ex_from_phi_slice(phi_slices[i], pic_in.Dh))
+        ey_slices.append(rh.ey_from_phi_slice(phi_slices[i], pic_in.Dh))
+if volume:
+    ez_slices.append(np.zeros_like(phi_slices[0]))
+    for i in range(1,6):
+        ez_slices.append(rh.ez_from_two_phi_slices(phi_slices[i-1], phi_slices[i+1], dz_inside))
 
 Sx = nx_new//2 if do_symmetric2D else 0
 Sy = ny_new//2 if do_symmetric2D else 0
@@ -118,14 +124,16 @@ settings_dict = {'magnify_transverse_in': magnify_transverse_in,
                  'magnify_longitudinal_in': magnify_longitudinal_in, 
                  'demagnify_transverse_out': demagnify_transverse_out,
                  'demagnify_longitudinal_out': demagnify_longitudinal_out,
-                 'symmetric2D': do_symmetric2D
+                 'symmetric2D': do_symmetric2D,
+                 'volume': volume
                 }
 
 
 exfm.dict_to_h5(grid_dict, out_fname, compression_opts=compression_opts, group='grid', readwrite_opts='w')
 exfm.dict_to_h5(settings_dict, out_fname, compression_opts=compression_opts, group='settings', readwrite_opts='a')
-exfm.dict_to_h5(grid_dict, out_efname, compression_opts=compression_opts, group='grid', readwrite_opts='w')
-exfm.dict_to_h5(settings_dict, out_efname, compression_opts=compression_opts, group='settings', readwrite_opts='a')
+if volume:
+    exfm.dict_to_h5(grid_dict, out_efname, compression_opts=compression_opts, group='grid', readwrite_opts='w')
+    exfm.dict_to_h5(settings_dict, out_efname, compression_opts=compression_opts, group='settings', readwrite_opts='a')
 
 
 slice_index = 7
@@ -137,38 +145,43 @@ while kk < len(zg_new):
     if z_new >= z_lo and z_new < z_up:
         ## extract transverse slices and check transverse new grid
         phi_out_slice = rh.exact_slice(phi_slices, pic_in.xg, pic_in.yg, z_slices, xg_new, yg_new, z_new)
-        ex_out_slice = rh.exact_slice(ex_slices, pic_in.xg, pic_in.yg, z_slices, xg_new, yg_new, z_new)
-        ey_out_slice = rh.exact_slice(ey_slices, pic_in.xg, pic_in.yg, z_slices, xg_new, yg_new, z_new)
-        ez_out_slice = rh.exact_slice(ez_slices, pic_in.xg, pic_in.yg, z_slices, xg_new, yg_new, z_new)
+        if volume:
+            ex_out_slice = rh.exact_slice(ex_slices, pic_in.xg, pic_in.yg, z_slices, xg_new, yg_new, z_new)
+            ey_out_slice = rh.exact_slice(ey_slices, pic_in.xg, pic_in.yg, z_slices, xg_new, yg_new, z_new)
+            ez_out_slice = rh.exact_slice(ez_slices, pic_in.xg, pic_in.yg, z_slices, xg_new, yg_new, z_new)
 
 #        if do_symmetric2D: rh.fix_phi(phi_out_slice, Sx, Sy)
 
         exfm.dict_to_h5({'phi' : phi_out_slice[Sx:,Sy:,:]}, out_fname, compression_opts=compression_opts, group='slices/slice%d'%kk, readwrite_opts='a')
-        exfm.dict_to_h5({'ex' : ex_out_slice[Sx:,Sy:,:]}, out_efname, compression_opts=compression_opts, group='slices/ex_slice%d'%kk, readwrite_opts='a')
-        exfm.dict_to_h5({'ey' : ey_out_slice[Sx:,Sy:,:]}, out_efname, compression_opts=compression_opts, group='slices/ey_slice%d'%kk, readwrite_opts='a')
-        exfm.dict_to_h5({'ez' : ez_out_slice[Sx:,Sy:,:]}, out_efname, compression_opts=compression_opts, group='slices/ez_slice%d'%kk, readwrite_opts='a')
+        if volume:
+            exfm.dict_to_h5({'ex' : ex_out_slice[Sx:,Sy:,:]}, out_efname, compression_opts=compression_opts, group='slices/ex_slice%d'%kk, readwrite_opts='a')
+            exfm.dict_to_h5({'ey' : ey_out_slice[Sx:,Sy:,:]}, out_efname, compression_opts=compression_opts, group='slices/ey_slice%d'%kk, readwrite_opts='a')
+            exfm.dict_to_h5({'ez' : ez_out_slice[Sx:,Sy:,:]}, out_efname, compression_opts=compression_opts, group='slices/ez_slice%d'%kk, readwrite_opts='a')
         kk += 1
     elif z_new >= z_up:
         z_slices.append(zg_inside[slice_index])
         phi_slices.append(rh.get_slice(pic_out,pic_in,fname, z_slices[-1], symmetric_slice_2D=do_symmetric2D))
-        ex_slices.append(rh.ex_from_phi_slice(phi_slices[-1], pic_in.Dh))
-        ey_slices.append(rh.ey_from_phi_slice(phi_slices[-1], pic_in.Dh))
-        ez_slices.append(rh.ez_from_two_phi_slices(phi_slices[-3], phi_slices[-1], dz_inside))
+        if volume:
+            ex_slices.append(rh.ex_from_phi_slice(phi_slices[-1], pic_in.Dh))
+            ey_slices.append(rh.ey_from_phi_slice(phi_slices[-1], pic_in.Dh))
+            ez_slices.append(rh.ez_from_two_phi_slices(phi_slices[-3], phi_slices[-1], dz_inside))
 
         z_slices.popleft()
         phi_slices.popleft()
-        ex_slices.popleft()
-        ey_slices.popleft()
-        ez_slices.popleft()
+        if volume:
+            ex_slices.popleft()
+            ey_slices.popleft()
+            ez_slices.popleft()
         slice_index += 1
     else:
         print('Lost synchronization')
     print('%d/%d, %d/%d'%(kk,len(zg_new),slice_index,len(zg_inside)))
 
 del phi_slices
-del ex_slices
-del ey_slices
-del ez_slices
+if volume:
+    del ex_slices
+    del ey_slices
+    del ez_slices
 del pic_out
 del pic_in
 
@@ -195,67 +208,79 @@ max_index_x = -1
 max_index_y = -1
 max_index_z = -1
 
+mid_time = time.time()
 
-kk=0
-grid = exfm.h5_to_dict(out_fname, group='grid')
-phi0 = exfm.h5_to_dict(out_fname, group='slices/slice%d'%kk)['phi']
-ex0 = exfm.h5_to_dict(out_efname, group='slices/ex_slice%d'%kk)['ex']
-ey0 = exfm.h5_to_dict(out_efname, group='slices/ey_slice%d'%kk)['ey']
-ez0 = exfm.h5_to_dict(out_efname, group='slices/ez_slice%d'%kk)['ez']
-for kk in range(1,len(zg_new)):
-    if (1.*kk)/len(zg_new) >= perc:
-        print('%d%%... '%(int(kk/slice_index*100)))
-        perc += 0.1
-    phi1 = exfm.h5_to_dict(out_fname, group='slices/slice%d'%kk)['phi']
-    ex1 = exfm.h5_to_dict(out_efname, group='slices/ex_slice%d'%kk)['ex']
-    ey1 = exfm.h5_to_dict(out_efname, group='slices/ey_slice%d'%kk)['ey']
-    ez1 = exfm.h5_to_dict(out_efname, group='slices/ez_slice%d'%kk)['ez']
-    TIphi = pyTI.Tricubic_Interpolation(A=np.array([phi0,phi1]).transpose(1,2,0,3), dx=grid['dx'], dy=grid['dy'], dz=grid['dz'],method=ti_method)
-    TIex = pyTI.Tricubic_Interpolation(A=np.array([ex0,ex1]).transpose(1,2,0,3), dx=grid['dx'], dy=grid['dy'], dz=grid['dz'], method=ti_method)
-    TIey = pyTI.Tricubic_Interpolation(A=np.array([ey0,ey1]).transpose(1,2,0,3), dx=grid['dx'], dy=grid['dy'], dz=grid['dz'], method=ti_method)
-    TIez = pyTI.Tricubic_Interpolation(A=np.array([ez0,ez1]).transpose(1,2,0,3), dx=grid['dx'], dy=grid['dy'], dz=grid['dz'], method=ti_method)
-    iz = 0
-    vx = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
-    vy = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
-    vz = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
-    vxn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
-    vyn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
-    vzn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
-    for ix in range(TIphi.ix_bound_low, TIphi.ix_bound_up+1):
-        for iy in range(TIphi.iy_bound_low, TIphi.iy_bound_up+1):
-            vxn[ix,iy], vx[ix,iy] = vh.var_x(ix, iy, iz, TIphi, TIex, dx_new)    
-            vyn[ix,iy], vy[ix,iy] = vh.var_y(ix, iy, iz, TIphi, TIey, dy_new)    
-            vzn[ix,iy], vz[ix,iy] = vh.var_z(ix, iy, iz, TIphi, TIez, dz_new)    
-
-    lvx = np.log10(vx)
-    lvy = np.log10(vy)
-    lvz = np.log10(vz)
-    lvxn = np.log10(vxn)
-    lvyn = np.log10(vyn)
-    lvzn = np.log10(vzn)
-
-    log10_vx_hist += np.histogram(lvx.flatten(), bins=4000, range=(-13,+13))[0]
-    log10_vy_hist += np.histogram(lvy.flatten(), bins=4000, range=(-13,+13))[0]
-    log10_vz_hist += np.histogram(lvz.flatten(), bins=4000, range=(-13,+13))[0]
-    log10_vxn_hist += np.histogram(lvxn.flatten(), bins=4000, range=(-13,+13))[0]
-    log10_vyn_hist += np.histogram(lvyn.flatten(), bins=4000, range=(-13,+13))[0]
-    log10_vzn_hist += np.histogram(lvzn.flatten(), bins=4000, range=(-13,+13))[0]
-
-    if max_log10_vx < np.max(lvx):
-        max_index_x = np.unravel_index(np.argmax(lvx, axis=None), lvx.shape) + (kk,)
-        max_log10_vx = np.max(lvx)
-
-    if max_log10_vy < np.max(lvy):
-        max_index_y = np.unravel_index(np.argmax(lvy, axis=None), lvy.shape) + (kk,)
-        max_log10_vy = np.max(lvy)
-
-    if max_log10_vz < np.max(lvz):
-        max_index_z = np.unravel_index(np.argmax(lvz, axis=None), lvz.shape) + (kk,)
-        max_log10_vz = np.max(lvz)
-
+phi_file = h5py.File(out_fname, 'a')
+efield_file = h5py.File(out_efname, 'a')
+if volume:
+    kk=0
+    grid = exfm.h5_to_dict(out_fname, group='grid')
+    phi0 = exfm.h5_to_dict(out_fname, group='slices/slice%d'%kk)['phi']
+    ex0 = exfm.h5_to_dict(out_efname, group='slices/ex_slice%d'%kk)['ex']
+    ey0 = exfm.h5_to_dict(out_efname, group='slices/ey_slice%d'%kk)['ey']
+    ez0 = exfm.h5_to_dict(out_efname, group='slices/ez_slice%d'%kk)['ez']
+    # phi0 = phi_file[f'slices/slice{kk:d}/phi'][()]
+    # ex0 = efield_file[f'slices/ex_slice{kk:d}/ex'][()]
+    # ey0 = efield_file[f'slices/ey_slice{kk:d}/ey'][()]
+    # ez0 = efield_file[f'slices/ez_slice{kk:d}/ez'][()]
+    for kk in range(1,len(zg_new)):
+        if (1.*kk)/len(zg_new) >= perc:
+            print('%d%%... '%(int(kk/slice_index*100)))
+            perc += 0.1
+        # phi1 = phi_file[f'slices/slice{kk:d}/phi'][()]
+        # ex1 = efield_file[f'slices/ex_slice{kk:d}/ex'][()]
+        # ey1 = efield_file[f'slices/ey_slice{kk:d}/ey'][()]
+        # ez1 = efield_file[f'slices/ez_slice{kk:d}/ez'][()]
+        phi1 = exfm.h5_to_dict(out_fname, group='slices/slice%d'%kk)['phi']
+        ex1 = exfm.h5_to_dict(out_efname, group='slices/ex_slice%d'%kk)['ex']
+        ey1 = exfm.h5_to_dict(out_efname, group='slices/ey_slice%d'%kk)['ey']
+        ez1 = exfm.h5_to_dict(out_efname, group='slices/ez_slice%d'%kk)['ez']
+        TIphi = pyTI.Tricubic_Interpolation(A=np.array([phi0,phi1]).transpose(1,2,0,3), dx=grid['dx'], dy=grid['dy'], dz=grid['dz'],method=ti_method)
+        TIex = pyTI.Tricubic_Interpolation(A=np.array([ex0,ex1]).transpose(1,2,0,3), dx=grid['dx'], dy=grid['dy'], dz=grid['dz'], method=ti_method)
+        TIey = pyTI.Tricubic_Interpolation(A=np.array([ey0,ey1]).transpose(1,2,0,3), dx=grid['dx'], dy=grid['dy'], dz=grid['dz'], method=ti_method)
+        TIez = pyTI.Tricubic_Interpolation(A=np.array([ez0,ez1]).transpose(1,2,0,3), dx=grid['dx'], dy=grid['dy'], dz=grid['dz'], method=ti_method)
+        iz = 0
+        vx = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+        vy = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+        vz = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+        vxn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+        vyn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+        vzn = np.empty([TIphi.ix_bound_up+1 - TIphi.ix_bound_low, TIphi.iy_bound_up+1 - TIphi.iy_bound_low])
+        for ix in range(TIphi.ix_bound_low, TIphi.ix_bound_up+1):
+            for iy in range(TIphi.iy_bound_low, TIphi.iy_bound_up+1):
+                vxn[ix,iy], vx[ix,iy] = vh.var_x(ix, iy, iz, TIphi, TIex, dx_new)    
+                vyn[ix,iy], vy[ix,iy] = vh.var_y(ix, iy, iz, TIphi, TIey, dy_new)    
+                vzn[ix,iy], vz[ix,iy] = vh.var_z(ix, iy, iz, TIphi, TIez, dz_new)    
     
-
-    phi0, ex0, ey0, ez0 = phi1, ex1, ey1, ez1
+        lvx = np.log10(vx)
+        lvy = np.log10(vy)
+        lvz = np.log10(vz)
+        lvxn = np.log10(vxn)
+        lvyn = np.log10(vyn)
+        lvzn = np.log10(vzn)
+    
+        log10_vx_hist += np.histogram(lvx.flatten(), bins=4000, range=(-13,+13))[0]
+        log10_vy_hist += np.histogram(lvy.flatten(), bins=4000, range=(-13,+13))[0]
+        log10_vz_hist += np.histogram(lvz.flatten(), bins=4000, range=(-13,+13))[0]
+        log10_vxn_hist += np.histogram(lvxn.flatten(), bins=4000, range=(-13,+13))[0]
+        log10_vyn_hist += np.histogram(lvyn.flatten(), bins=4000, range=(-13,+13))[0]
+        log10_vzn_hist += np.histogram(lvzn.flatten(), bins=4000, range=(-13,+13))[0]
+    
+        if max_log10_vx < np.max(lvx):
+            max_index_x = np.unravel_index(np.argmax(lvx, axis=None), lvx.shape) + (kk,)
+            max_log10_vx = np.max(lvx)
+    
+        if max_log10_vy < np.max(lvy):
+            max_index_y = np.unravel_index(np.argmax(lvy, axis=None), lvy.shape) + (kk,)
+            max_log10_vy = np.max(lvy)
+    
+        if max_log10_vz < np.max(lvz):
+            max_index_z = np.unravel_index(np.argmax(lvz, axis=None), lvz.shape) + (kk,)
+            max_log10_vz = np.max(lvz)
+    
+        
+    
+        phi0, ex0, ey0, ez0 = phi1, ex1, ey1, ez1
 
 print()
 print('Comparison complete.')
@@ -282,10 +307,13 @@ stats_dict = {'max_log10_vx': max_log10_vx,
              }
 
 exfm.dict_to_h5(stats_dict, out_fname, compression_opts=compression_opts, group='stats', readwrite_opts='a')
-exfm.dict_to_h5(stats_dict, out_efname, compression_opts=compression_opts, group='stats', readwrite_opts='a')
+if volume:
+    exfm.dict_to_h5(stats_dict, out_efname, compression_opts=compression_opts, group='stats', readwrite_opts='a')
 
 end_time = time.time()
-print('Running time: %f mins'%((end_time-start_time)/60.))
+print(f'Refining time: {(mid_time-start_time)/60:.1f} mins')
+print(f'Volume time: {(end_time-mid_time)/60:.1f} mins')
+print(f'Total time: {(end_time-start_time)/60.} mins')
 
 # shutil.copyfile(out_fname, pinches_folder+out_fname)
 #shutil.copyfile(out_efname, pinches_folder+out_efname)
