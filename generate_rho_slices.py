@@ -17,6 +17,7 @@ dh = grid['xg'][1] - grid['xg'][0]
 grid['xg'] = grid['xg'][Nd:-Nd]
 grid['yg'] = grid['yg'][Nd:-Nd]
 N = len(grid['zg'])
+exfm.dict_to_h5(grid, fname, group='grid', readwrite_opts='a')
 
 for ii in track(range(N)):
     phi = exfm.h5_to_dict(fname, group=f'slices/slice{ii}')['phi']
