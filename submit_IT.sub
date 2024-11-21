@@ -1,0 +1,22 @@
+executable = executable.sh
+mli = 1
+sey = 1.30
+intensity = 1.20
+betastar = 30
+xing = 150
+collider = Run3_2025_collisions_60cm_18cm_$(xing)urad_$(intensity)e11_2.0um_62.310_60.320_20_300_0.001
+#collider = Run3_2023_collisions_$(betastar)cm_$(xing)urad_$(intensity)e11_2.0um_62.310_60.320_20_300_0.001
+blen = 0.09
+triplet = LHCIT_$(itr)_sey$(sey)_intensity$(intensity)_blen$(blen).h5
+arguments = $(collider) $(triplet) $(mli)
+output = log/$(collider)_$(triplet)_$(mli).out
+error = log/$(collider)_$(triplet)_$(mli).err
+log = log/$(collider)_$(triplet)_$(mli).log
+transfer_output_files = ""
++SingularityImage = "/cvmfs/unpacked.cern.ch/registry.cern.ch/ecloud-scrubbing/pyecloud:2024.1"
+RequestCpus = 24
++BigMemJob = True
++MaxRunTime = 259200
++AccountingGroup = "group_u_BE.u_bigmem"
+queue 1 itr in itl1, itr1, itl5, itr5
+# queue 1 itr in itl1
