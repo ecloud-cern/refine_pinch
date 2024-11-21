@@ -18,3 +18,10 @@ python generate_rho.py Pinch.h5
 python reorder_slices.py Pinch.h5
 python refine_pinch.py Pinch.h5
 ```
+
+### arguments in refine_pinch.py
+
+- MTI (magnify tranverse input) refers to ratio between input grid and auxilliary grid
+- MLI (magnify longitudinal input) refers to ratio between number of slices in the input grid and and the auxilliary grid
+- DTO (demagnify transverse output) refers to ratio between input grid and output grid
+- DLO (demagnify longitudinal output) refers to ratio between number of slices in the input grid and and the output grid
