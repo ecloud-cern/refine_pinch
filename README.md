@@ -1,6 +1,12 @@
 # refine_pinch
 
-Typical usage:
+# Requires:
+
+```
+pip install git+https://github.com/kparasch/TricubicInterpolation.git@v1.1.0
+```
+
+## Typical usage:
 
 If the file doesn't include the charge density (rho), e.g. when lumping many Inner Triplet ecloud slices to get one effective slice, it must first be generated:
 
